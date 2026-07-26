@@ -8,7 +8,7 @@
 		<version>4.1.0</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>cz.cuni.mff.kocaro.programs</groupId>
+	<groupId>cz.cuni.mff.kocaro.comm_app</groupId>
 	<artifactId>comm-app-backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name/>

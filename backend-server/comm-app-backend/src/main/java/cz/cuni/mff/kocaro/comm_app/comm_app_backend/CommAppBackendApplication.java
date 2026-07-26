@@ -1,4 +1,4 @@
-package cz.cuni.mff.kocaro.programs.comm_app_backend;
+package cz.cuni.mff.kocaro.comm_app.comm_app_backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
