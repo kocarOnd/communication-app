@@ -32,7 +32,7 @@ public class NvcScenario {
     @Column(nullable = false, length = 1024)
     private String contextDescription;
 
-    @OneToMany(mappedBy = "nvc_scenario", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "scenario", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<NvcScenarioOption> options = new ArrayList<>();
 
     public void addOption(NvcScenarioOption option) {
