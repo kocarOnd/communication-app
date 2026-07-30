@@ -15,6 +15,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Represents a scenario for NVC exercises
+ */
 @Entity
 @Table(name = "nvc_scenarios")
 @Getter
@@ -32,6 +35,9 @@ public class NvcScenario {
     @Column(nullable = false, length = 1024)
     private String contextDescription;
 
+    /**
+     * Options for exercises labeled with NvcPhase
+     */
     @OneToMany(mappedBy = "scenario", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<NvcScenarioOption> options = new ArrayList<>();
 

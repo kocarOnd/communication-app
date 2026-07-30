@@ -15,6 +15,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Represents an option the user may choose during a NVC scenario exercise
+ */
 @Entity
 @Table(name = "nvc_scenario_options")
 @Getter

@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 /**
- * The JSON payload the Android client sends to the server when a user makes a choice.
+ * The JSON payload the client sends to the server when a user makes a choice.
  */
 public record NvcScenarioUserAttemptRequestDto(
         @NotBlank(message = "Device ID is required to track the attempt")

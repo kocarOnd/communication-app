@@ -17,6 +17,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+/**
+ * Represents a single choice made by the user 
+ */
 @Entity
 @Table(name = "nvc_scenario_user_attempts")
 @Getter
