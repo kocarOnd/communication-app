@@ -4,9 +4,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -19,10 +23,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.navigation.GlobalRoute
 import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.nvc_scenario.MultiSelectExercise
 import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.nvc_scenario.NvcScenarioViewModel
 import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.nvc_scenario.NvcUiEvent
@@ -44,9 +50,17 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(Unit) {
                 viewModel.uiEvent.collect { event ->
                     when (event) {
-                        is NvcUiEvent.Navigate -> navController.navigate(event.route) {
-                            popUpTo(NvcScenarioExerciseRoute.MultiSelectPhase.route) {
-                                inclusive = true
+                        is NvcUiEvent.Navigate -> {
+                            if (event.route == GlobalRoute.MainMenu.route) {
+                                navController.navigate(event.route) {
+                                    popUpTo(0) { inclusive = true }
+                                }
+                            } else {
+                                navController.navigate(event.route) {
+                                    popUpTo(NvcScenarioExerciseRoute.MultiSelectPhase.route) {
+                                        inclusive = true
+                                    }
+                                }
                             }
                         }
                     }
@@ -56,8 +70,25 @@ class MainActivity : ComponentActivity() {
             // The Root Routing Engine
             NavHost(
                 navController = navController,
-                startDestination = NvcScenarioExerciseRoute.Loading.route
+                startDestination = GlobalRoute.MainMenu.route
             ) {
+                // --- GLOBAL DOMAIN ---
+                composable(GlobalRoute.MainMenu.route) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("Communication App", style = MaterialTheme.typography.headlineMedium)
+                            Spacer(modifier = Modifier.height(32.dp))
+                            Button(onClick = {
+                                // To restart the exercise, we must fetch a fresh scenario
+                                viewModel.fetchNewScenario()
+                                navController.navigate(NvcScenarioExerciseRoute.Loading.route)
+                            }) {
+                                Text("Start NVC Scenario Exercise")
+                            }
+                        }
+                    }
+                }
+
                 // --- EXERCISE DOMAIN (Wrapped in Scaffold) ---
                 composable(NvcScenarioExerciseRoute.Loading.route) {
                     ExerciseScaffold(uiState = uiState) { innerPadding ->
@@ -107,14 +138,13 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
+                // --- TERMINAL DOMAIN (No Scaffold) ---
                 composable(NvcScenarioExerciseRoute.FullReport.route) {
                     if (uiState is ScenarioUiState.Active) {
                         val activeState = uiState as ScenarioUiState.Active
                         ScenarioFullReport (
                             state = activeState,
-                            onFinishClicked = {
-                                // TODO: Define the exit strategy
-                            }
+                            onFinishClicked = { viewModel.finishExerciseAndExit() } // NEW: Trigger the exit
                         )
                     }
                 }

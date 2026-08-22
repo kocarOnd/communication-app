@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import cz.cuni.mff.kocaro.comm_app.commappandroid.network.NvcScenarioApiClient
 import cz.cuni.mff.kocaro.comm_app.commappandroid.network.dto.NvcPhase
 import cz.cuni.mff.kocaro.comm_app.commappandroid.network.dto.NvcScenarioResponseDto
+import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.navigation.GlobalRoute
 import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.navigation.NvcScenarioExerciseRoute
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,11 +26,6 @@ class NvcScenarioViewModel : ViewModel() {
     val uiState: StateFlow<ScenarioUiState> = _uiState.asStateFlow()
     private val _uiEvent = Channel<NvcUiEvent>()
     val uiEvent = _uiEvent.receiveAsFlow()
-
-    init {
-        // Fetch a scenario immediately when the ViewModel is first created
-        fetchNewScenario()
-    }
 
     fun fetchNewScenario() {
         _uiState.value = ScenarioUiState.Loading
@@ -130,6 +126,12 @@ class NvcScenarioViewModel : ViewModel() {
                 NvcPhase.FULL_REPORT -> _uiEvent.send(NvcUiEvent.Navigate(NvcScenarioExerciseRoute.FullReport.route))
                 else -> {} // MultiSelectPhase just re-renders in place; no navigation needed
             }
+        }
+    }
+
+    fun finishExerciseAndExit() {
+        viewModelScope.launch {
+            _uiEvent.send(NvcUiEvent.Navigate(GlobalRoute.MainMenu.route))
         }
     }
 }
