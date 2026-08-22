@@ -14,6 +14,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.mockito.Mockito.when;
@@ -71,7 +72,10 @@ class NvcScenarioControllerTest {
     @Test
     void submitAttempt_WithValidData_Returns200() throws Exception {
         // ARRANGE: Create a valid JSON payload
-        NvcScenarioUserAttemptRequestDto requestDto = new NvcScenarioUserAttemptRequestDto("device-123", 1L, 10L);
+        List<Long> ids = new ArrayList<>();
+        ids.add(10L);
+
+        NvcScenarioUserAttemptRequestDto requestDto = new NvcScenarioUserAttemptRequestDto("device-123", 1L, ids);
         String jsonPayload = objectMapper.writeValueAsString(requestDto);
 
         // ACT & ASSERT: Expect a 200 OK
@@ -84,7 +88,10 @@ class NvcScenarioControllerTest {
     @Test
     void submitAttempt_WithMissingDeviceId_Returns400() throws Exception {
         // ARRANGE: Create an invalid payload (device ID is blank)
-        NvcScenarioUserAttemptRequestDto requestDto = new NvcScenarioUserAttemptRequestDto("", 1L, 10L);
+        List<Long> ids = new ArrayList<>();
+        ids.add(10L);
+
+        NvcScenarioUserAttemptRequestDto requestDto = new NvcScenarioUserAttemptRequestDto("", 1L, ids);
         String jsonPayload = objectMapper.writeValueAsString(requestDto);
 
         // ACT & ASSERT: Expect a 400 Bad Request before it even reaches the Service layer

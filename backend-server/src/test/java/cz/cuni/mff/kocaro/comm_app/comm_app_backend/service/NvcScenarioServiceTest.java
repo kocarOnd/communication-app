@@ -18,6 +18,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -87,7 +89,10 @@ class NvcScenarioServiceTest {
     @Test
     void processUserAttempt_WithValidData_SavesAttempt() {
         // ARRANGE
-        NvcScenarioUserAttemptRequestDto request = new NvcScenarioUserAttemptRequestDto("device-123", 1L, 10L);
+        List<Long> ids = new ArrayList<>();
+        ids.add(10L);
+
+        NvcScenarioUserAttemptRequestDto request = new NvcScenarioUserAttemptRequestDto("device-123", 1L, ids);
         
         when(scenarioRepository.findById(1L)).thenReturn(Optional.of(mockScenario));
         when(optionRepository.findById(10L)).thenReturn(Optional.of(mockOption));
@@ -115,7 +120,10 @@ class NvcScenarioServiceTest {
         sneakyOption.setId(99L);
         sneakyScenario.addOption(sneakyOption);
 
-        NvcScenarioUserAttemptRequestDto request = new NvcScenarioUserAttemptRequestDto("device-123", 1L, 99L);
+        List<Long> ids = new ArrayList<>();
+        ids.add(99L);
+
+        NvcScenarioUserAttemptRequestDto request = new NvcScenarioUserAttemptRequestDto("device-123", 1L, ids);
 
         when(scenarioRepository.findById(1L)).thenReturn(Optional.of(mockScenario));
         when(optionRepository.findById(99L)).thenReturn(Optional.of(sneakyOption));

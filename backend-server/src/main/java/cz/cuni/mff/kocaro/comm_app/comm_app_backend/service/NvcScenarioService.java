@@ -14,7 +14,6 @@ import cz.cuni.mff.kocaro.comm_app.comm_app_backend.dto.NvcScenarioOptionDto;
 import cz.cuni.mff.kocaro.comm_app.comm_app_backend.dto.NvcScenarioResponseDto;
 import cz.cuni.mff.kocaro.comm_app.comm_app_backend.dto.NvcScenarioUserAttemptRequestDto;
 import cz.cuni.mff.kocaro.comm_app.comm_app_backend.exception.ScenarioNotFoundException;
-import cz.cuni.mff.kocaro.comm_app.comm_app_backend.exception.ScenarioOptionNotFoundException;
 import cz.cuni.mff.kocaro.comm_app.comm_app_backend.repository.NvcScenarioOptionRepository;
 import cz.cuni.mff.kocaro.comm_app.comm_app_backend.repository.NvcScenarioRepository;
 import cz.cuni.mff.kocaro.comm_app.comm_app_backend.repository.NvcScenarioUserAttemptRepository;
@@ -69,23 +68,24 @@ public class NvcScenarioService {
         NvcScenario scenario = scenarioRepository.findById(requestDto.scenarioId())
                 .orElseThrow(() -> new ScenarioNotFoundException("Scenario ID " + requestDto.scenarioId() + " not found."));
 
-        NvcScenarioOption selectedOption = optionRepository.findById(requestDto.selectedOptionId())
-                .orElseThrow(() -> new ScenarioOptionNotFoundException("Option ID " + requestDto.selectedOptionId() + " not found."));
-
-        // Ensure selected option actually belongs to this scenario
-        if (!selectedOption.getScenario().getId().equals(scenario.getId())) {
-            throw new IllegalArgumentException("The selected option does not belong to the provided scenario.");
-        }
-
-        NvcScenarioUserAttempt attempt = new NvcScenarioUserAttempt();
-        attempt.setDeviceId(requestDto.deviceId());
-        attempt.setScenario(scenario);
-        attempt.setSelectedOption(selectedOption);
+        List<NvcScenarioUserAttempt> attemptsToSave = requestDto.selectedOptionIds().stream().map(optionId -> {
         
-        attempt.setPhase(selectedOption.getPhase());
-        attempt.setWasCorrect(selectedOption.isCorrect());
-        attempt.setAttemptedAt(LocalDateTime.now());
+                NvcScenarioOption option = optionRepository.findById(optionId)
+                        .orElseThrow(() -> new IllegalArgumentException("Option not found: " + optionId));
 
-        attemptRepository.save(attempt);
+                NvcScenarioUserAttempt attempt = new NvcScenarioUserAttempt();
+                attempt.setAttemptedAt(LocalDateTime.now());
+                attempt.setDeviceId(requestDto.deviceId());
+                attempt.setScenario(scenario);
+                attempt.setSelectedOption(option);
+                attempt.setPhase(option.getPhase());
+                attempt.setWasCorrect(option.isCorrect());
+        
+                return attempt;
+        }).collect(Collectors.toList());
+
+        attemptRepository.saveAll(attemptsToSave);
+        
+        System.out.println("An attemp of user " + requestDto.deviceId() + " was saved.");
     }
 }

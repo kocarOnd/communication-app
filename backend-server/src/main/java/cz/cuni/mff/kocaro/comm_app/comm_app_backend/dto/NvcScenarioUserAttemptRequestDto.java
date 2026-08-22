@@ -1,6 +1,9 @@
 package cz.cuni.mff.kocaro.comm_app.comm_app_backend.dto;
 
+import java.util.List;
+
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
 /**
@@ -13,6 +16,6 @@ public record NvcScenarioUserAttemptRequestDto(
         @NotNull(message = "Scenario ID is required")
         Long scenarioId,
 
-        @NotNull(message = "Selected Option ID is required")
-        Long selectedOptionId
+        @NotEmpty(message = "At least one Selected Option ID is required")
+        List<Long> selectedOptionIds
 ) {}

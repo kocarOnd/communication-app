@@ -1,10 +1,12 @@
 package cz.cuni.mff.kocaro.comm_app.commappandroid.ui.nvc_scenario
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import cz.cuni.mff.kocaro.comm_app.commappandroid.network.NvcScenarioApiClient
 import cz.cuni.mff.kocaro.comm_app.commappandroid.network.dto.NvcPhase
-import cz.cuni.mff.kocaro.comm_app.commappandroid.network.dto.NvcScenarioResponseDto
+import cz.cuni.mff.kocaro.comm_app.commappandroid.network.dto.NvcScenarioUserAttemptRequestDto
+import cz.cuni.mff.kocaro.comm_app.commappandroid.security.getDeviceId
 import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.navigation.GlobalRoute
 import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.navigation.NvcScenarioExerciseRoute
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,14 +20,15 @@ sealed interface NvcUiEvent {
     data class Navigate(val route: String) : NvcUiEvent
 }
 
-class NvcScenarioViewModel : ViewModel() {
-
+class NvcScenarioViewModel(application: Application) : AndroidViewModel(application) {
+    private val sessionDeviceId: String = getDeviceId(application)
     // Internal mutable state
     private val _uiState = MutableStateFlow<ScenarioUiState>(ScenarioUiState.Loading)
     // Public immutable state that Jetpack Compose will observe
     val uiState: StateFlow<ScenarioUiState> = _uiState.asStateFlow()
     private val _uiEvent = Channel<NvcUiEvent>()
     val uiEvent = _uiEvent.receiveAsFlow()
+    private val failedAttemptQueue = mutableListOf<NvcScenarioUserAttemptRequestDto>()
 
     fun fetchNewScenario() {
         _uiState.value = ScenarioUiState.Loading
@@ -101,6 +104,43 @@ class NvcScenarioViewModel : ViewModel() {
 
     fun advanceToNextPhase() {
         val currentState = _uiState.value as? ScenarioUiState.Active ?: return
+
+        val phaseSelections = currentState.selectedOptionIds.toList()
+        val scenarioId = currentState.scenario.id
+
+        if (phaseSelections.isNotEmpty()) {
+            val currentDto = NvcScenarioUserAttemptRequestDto(
+                deviceId = sessionDeviceId,
+                scenarioId = scenarioId,
+                selectedOptionIds = phaseSelections
+            )
+
+            viewModelScope.launch {
+                val iterator = failedAttemptQueue.iterator()
+                while (iterator.hasNext()) {
+                    val pastDto = iterator.next()
+                    try {
+                        val response = NvcScenarioApiClient.apiService.submitAttempt(pastDto)
+                        if (response.isSuccessful) {
+                            iterator.remove()
+                        } else {
+                            break
+                        }
+                    } catch (e: Exception) {
+                        break
+                    }
+                }
+
+                try {
+                    val response = NvcScenarioApiClient.apiService.submitAttempt(currentDto)
+                    if (!response.isSuccessful) {
+                        failedAttemptQueue.add(currentDto)
+                    }
+                } catch (e: Exception) {
+                    failedAttemptQueue.add(currentDto)
+                }
+            }
+        }
 
         val updatedSessionSelections = currentState.sessionSelectedOptionIds + currentState.selectedOptionIds
 
