@@ -35,7 +35,13 @@ class NvcScenarioViewModel : ViewModel() {
             try {
                 val response = NvcScenarioApiClient.apiService.getRandomScenario()
                 if (response.isSuccessful && response.body() != null) {
-                    _uiState.value = ScenarioUiState.Active(scenario = response.body()!!)
+                    val rawScenario = response.body()!!
+
+                    val randomizedScenario = rawScenario.copy(
+                        options = rawScenario.options.shuffled()
+                    )
+
+                    _uiState.value = ScenarioUiState.Active(scenario = randomizedScenario)
 
                     // Trigger the navigation to leave the Loading screen
                     _uiEvent.send(NvcUiEvent.Navigate(NvcScenarioExerciseRoute.MultiSelectPhase.route))
