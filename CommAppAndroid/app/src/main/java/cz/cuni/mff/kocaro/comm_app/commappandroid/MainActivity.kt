@@ -28,6 +28,7 @@ import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.nvc_scenario.NvcScenarioVie
 import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.nvc_scenario.NvcUiEvent
 import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.nvc_scenario.ScenarioUiState
 import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.navigation.NvcScenarioExerciseRoute
+import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.nvc_scenario.ScenarioFullReport
 import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.nvc_scenario.SwipeExercise
 import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.nvc_scenario.SwipeExerciseSummary
 
@@ -106,10 +107,15 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                // --- TERMINAL DOMAIN (No Scaffold) ---
                 composable(NvcScenarioExerciseRoute.FullReport.route) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("This is the full-screen exercise summary. The Top Bar is completely gone.")
+                    if (uiState is ScenarioUiState.Active) {
+                        val activeState = uiState as ScenarioUiState.Active
+                        ScenarioFullReport (
+                            state = activeState,
+                            onFinishClicked = {
+                                // TODO: Define the exit strategy
+                            }
+                        )
                     }
                 }
             }

@@ -100,6 +100,8 @@ class NvcScenarioViewModel : ViewModel() {
     fun advanceToNextPhase() {
         val currentState = _uiState.value as? ScenarioUiState.Active ?: return
 
+        val updatedSessionSelections = currentState.sessionSelectedOptionIds + currentState.selectedOptionIds
+
         val nextPhase = when (currentState.currentPhase) {
             NvcPhase.OBSERVATION -> NvcPhase.FEELING
             NvcPhase.FEELING -> NvcPhase.NEED
@@ -115,7 +117,9 @@ class NvcScenarioViewModel : ViewModel() {
             currentPhase = nextPhase,
             selectedOptionIds = if (isTerminalPhase) currentState.selectedOptionIds else emptySet(),
             evaluatedOptionIds = if (isTerminalPhase) currentState.evaluatedOptionIds else emptySet(),
-            isEvaluated = false
+            isEvaluated = false,
+
+            sessionSelectedOptionIds = updatedSessionSelections
         )
 
         // Trigger one-time navigation events for structural screen changes

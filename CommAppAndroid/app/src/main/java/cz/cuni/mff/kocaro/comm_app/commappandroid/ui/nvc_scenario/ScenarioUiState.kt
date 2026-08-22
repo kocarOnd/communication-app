@@ -10,10 +10,12 @@ sealed interface ScenarioUiState {
     data class Active(
         val scenario: NvcScenarioResponseDto,
         val currentPhase: NvcPhase = NvcPhase.OBSERVATION,
-        val selectedOptionIds: Set<Long> = emptySet(),
 
+        val selectedOptionIds: Set<Long> = emptySet(),
         val evaluatedOptionIds: Set<Long> = emptySet(),
-        val isEvaluated: Boolean = false
+        val isEvaluated: Boolean = false,
+
+        val sessionSelectedOptionIds: Set<Long> = emptySet()
     ) : ScenarioUiState {
 
         val remainingOptions = scenario.options
