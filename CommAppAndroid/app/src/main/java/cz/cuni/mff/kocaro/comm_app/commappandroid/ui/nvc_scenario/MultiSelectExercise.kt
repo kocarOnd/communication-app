@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import cz.cuni.mff.kocaro.comm_app.commappandroid.network.dto.NvcScenarioOptionDto
+import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.theme.calculateCardColor
 
 @Composable
 fun MultiSelectExercise(
@@ -97,18 +98,5 @@ fun MultiSelectExercise(
                 }
             }
         }
-    }
-}
-
-private fun calculateCardColor(isSelected: Boolean, isCorrect: Boolean, isEvaluated: Boolean): Color {
-    if (!isEvaluated) {
-        return if (isSelected) Color.LightGray else Color.White
-    }
-
-    return when {
-        isSelected && isCorrect -> Color(0xFFC8E6C9)
-        isSelected && !isCorrect -> Color(0xFFFFCDD2)
-        !isSelected && isCorrect -> Color(0xFFBBDEFB)
-        else -> Color(0xFFF5F5F5)
     }
 }

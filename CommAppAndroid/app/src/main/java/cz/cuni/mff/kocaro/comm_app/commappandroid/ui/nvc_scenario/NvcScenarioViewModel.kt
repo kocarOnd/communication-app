@@ -72,6 +72,31 @@ class NvcScenarioViewModel : ViewModel() {
         _uiState.value = currentState.copy(isEvaluated = true)
     }
 
+    fun recordSwipe(optionId: Long, isSelected: Boolean) {
+        val currentState = _uiState.value as? ScenarioUiState.Active ?: return
+
+        // Accumulate the swipe decisions
+        val newEvaluated = currentState.evaluatedOptionIds + optionId
+        val newSelected = if (isSelected) {
+            currentState.selectedOptionIds + optionId
+        } else {
+            currentState.selectedOptionIds
+        }
+
+        // Mutate the state
+        val updatedState = currentState.copy(
+            evaluatedOptionIds = newEvaluated,
+            selectedOptionIds = newSelected
+        )
+
+        _uiState.value = updatedState
+
+        // Evaluate the threshold: If the deck is empty, force the final transition
+        if (updatedState.remainingOptions.isEmpty()) {
+            advanceToNextPhase()
+        }
+    }
+
     fun advanceToNextPhase() {
         val currentState = _uiState.value as? ScenarioUiState.Active ?: return
 
@@ -79,20 +104,26 @@ class NvcScenarioViewModel : ViewModel() {
             NvcPhase.OBSERVATION -> NvcPhase.FEELING
             NvcPhase.FEELING -> NvcPhase.NEED
             NvcPhase.NEED -> NvcPhase.REQUEST
-            NvcPhase.REQUEST -> NvcPhase.SUMMARY
-            NvcPhase.SUMMARY -> NvcPhase.SUMMARY
+            NvcPhase.REQUEST -> NvcPhase.SWIPE_SUMMARY
+            NvcPhase.SWIPE_SUMMARY -> NvcPhase.FULL_REPORT
+            NvcPhase.FULL_REPORT -> NvcPhase.FULL_REPORT
         }
+
+        val isTerminalPhase = nextPhase == NvcPhase.SWIPE_SUMMARY || nextPhase == NvcPhase.FULL_REPORT
 
         _uiState.value = currentState.copy(
             currentPhase = nextPhase,
-            selectedOptionIds = emptySet(), // Clear previous choices
-            isEvaluated = false // Reset evaluation lock
+            selectedOptionIds = if (isTerminalPhase) currentState.selectedOptionIds else emptySet(),
+            evaluatedOptionIds = if (isTerminalPhase) currentState.evaluatedOptionIds else emptySet(),
+            isEvaluated = false
         )
+
         // Trigger one-time navigation events for structural screen changes
         viewModelScope.launch {
             when (nextPhase) {
                 NvcPhase.REQUEST -> _uiEvent.send(NvcUiEvent.Navigate(NvcScenarioExerciseRoute.SwipePhase.route))
-                NvcPhase.SUMMARY -> _uiEvent.send(NvcUiEvent.Navigate(NvcScenarioExerciseRoute.FeedbackSummary.route))
+                NvcPhase.SWIPE_SUMMARY -> _uiEvent.send(NvcUiEvent.Navigate(NvcScenarioExerciseRoute.SwipeSummary.route))
+                NvcPhase.FULL_REPORT -> _uiEvent.send(NvcUiEvent.Navigate(NvcScenarioExerciseRoute.FullReport.route))
                 else -> {} // MultiSelectPhase just re-renders in place; no navigation needed
             }
         }

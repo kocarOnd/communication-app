@@ -4,5 +4,6 @@ sealed class NvcScenarioExerciseRoute(val route: String) {
     data object Loading : NvcScenarioExerciseRoute("nvc_loading")
     data object MultiSelectPhase : NvcScenarioExerciseRoute("nvc_multi_select")
     data object SwipePhase : NvcScenarioExerciseRoute("nvc_swipe")
-    data object FeedbackSummary : NvcScenarioExerciseRoute("nvc_summary")
+    data object SwipeSummary : NvcScenarioExerciseRoute("nvc_swipe_summary")
+    data object FullReport : NvcScenarioExerciseRoute("nvc_full_report")
 }

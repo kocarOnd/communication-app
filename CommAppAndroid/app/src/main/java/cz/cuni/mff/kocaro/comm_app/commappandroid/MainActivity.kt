@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -12,6 +13,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -26,9 +28,10 @@ import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.nvc_scenario.NvcScenarioVie
 import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.nvc_scenario.NvcUiEvent
 import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.nvc_scenario.ScenarioUiState
 import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.navigation.NvcScenarioExerciseRoute
+import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.nvc_scenario.SwipeExercise
+import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.nvc_scenario.SwipeExerciseSummary
 
 class MainActivity : ComponentActivity() {
-    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -37,7 +40,6 @@ class MainActivity : ComponentActivity() {
             val viewModel: NvcScenarioViewModel = viewModel()
             val uiState by viewModel.uiState.collectAsState()
 
-            // 1. The Channel Observer (Securely scoped outside the UI render logic)
             LaunchedEffect(Unit) {
                 viewModel.uiEvent.collect { event ->
                     when (event) {
@@ -50,69 +52,96 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            // 2. The Scaffold Container
-            Scaffold(
-                topBar = {
-                    TopAppBar(
-                        title = {
-                            // Dynamically read the state machine's active phase
-                            val titleText = if (uiState is ScenarioUiState.Active) {
-                                "Phase: ${(uiState as ScenarioUiState.Active).currentPhase.name}"
-                            } else {
-                                "NVC Exercise"
-                            }
-                            Text(titleText)
-                        },
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    )
-                }
-            ) { innerPadding ->
-
-                // 3. The Navigation Engine
-                NavHost(
-                    navController = navController,
-                    startDestination = NvcScenarioExerciseRoute.Loading.route,
-                    modifier = Modifier.padding(innerPadding)
-                ) {
-                    composable(NvcScenarioExerciseRoute.Loading.route) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            // The Root Routing Engine
+            NavHost(
+                navController = navController,
+                startDestination = NvcScenarioExerciseRoute.Loading.route
+            ) {
+                // --- EXERCISE DOMAIN (Wrapped in Scaffold) ---
+                composable(NvcScenarioExerciseRoute.Loading.route) {
+                    ExerciseScaffold(uiState = uiState) { innerPadding ->
+                        Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
                             Text("Loading Scenario from Spring Boot...")
                         }
                     }
+                }
 
-                    composable(NvcScenarioExerciseRoute.MultiSelectPhase.route) {
-                        // 4. Instantiate your actual MultiSelect UI and map the callbacks
+                composable(NvcScenarioExerciseRoute.MultiSelectPhase.route) {
+                    ExerciseScaffold(uiState = uiState) { innerPadding ->
                         if (uiState is ScenarioUiState.Active) {
-                            val activeState = uiState as ScenarioUiState.Active
-                            MultiSelectExercise(
-                                state = activeState,
-                                onOptionToggled = { optionId -> viewModel.toggleOptionSelection(optionId) },
-                                onSubmitClicked = { viewModel.submitPhase() },
-                                onNextClicked = { viewModel.advanceToNextPhase() }
-                            )
-                        } else {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Text("Error: State is not active.")
+                            Box(modifier = Modifier.padding(innerPadding)) {
+                                MultiSelectExercise(
+                                    state = uiState as ScenarioUiState.Active,
+                                    onOptionToggled = { viewModel.toggleOptionSelection(it) },
+                                    onSubmitClicked = { viewModel.submitPhase() },
+                                    onNextClicked = { viewModel.advanceToNextPhase() }
+                                )
                             }
                         }
                     }
+                }
 
-                    composable(NvcScenarioExerciseRoute.SwipePhase.route) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("The Physics Swipe UI will render here.")
+                composable(NvcScenarioExerciseRoute.SwipePhase.route) {
+                    ExerciseScaffold(uiState = uiState) { innerPadding ->
+                        if (uiState is ScenarioUiState.Active) {
+                            Box(modifier = Modifier.padding(innerPadding)) {
+                                SwipeExercise(
+                                    state = uiState as ScenarioUiState.Active,
+                                    onSwipe = { optionId, isSelected -> viewModel.recordSwipe(optionId, isSelected) }
+                                )
+                            }
                         }
                     }
+                }
 
-                    composable(NvcScenarioExerciseRoute.FeedbackSummary.route) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("The Final Evaluation will render here.")
+                composable(NvcScenarioExerciseRoute.SwipeSummary.route) {
+                    ExerciseScaffold(uiState = uiState) { innerPadding ->
+                        Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
+                            // Temporary placeholder for the Swipe Evaluation UI
+                            SwipeExerciseSummary(
+                                state = uiState as ScenarioUiState.Active,
+                                onNextClicked = { viewModel.advanceToNextPhase() }
+                            )
                         }
+                    }
+                }
+
+                // --- TERMINAL DOMAIN (No Scaffold) ---
+                composable(NvcScenarioExerciseRoute.FullReport.route) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text("This is the full-screen exercise summary. The Top Bar is completely gone.")
                     }
                 }
             }
         }
+    }
+}
+
+// Reusable structural wrapper that enforces the visual boundary of the exercise
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ExerciseScaffold(
+    uiState: ScenarioUiState,
+    content: @Composable (PaddingValues) -> Unit
+) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    val titleText = if (uiState is ScenarioUiState.Active) {
+                        "Phase: ${uiState.currentPhase.name}"
+                    } else {
+                        "NVC Exercise"
+                    }
+                    Text(titleText)
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            )
+        }
+    ) { padding ->
+        content(padding)
     }
 }
