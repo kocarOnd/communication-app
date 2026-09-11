@@ -7,8 +7,6 @@ import cz.cuni.mff.kocaro.comm_app.commappandroid.network.NvcScenarioApiClient
 import cz.cuni.mff.kocaro.comm_app.commappandroid.network.dto.NvcPhase
 import cz.cuni.mff.kocaro.comm_app.commappandroid.network.dto.NvcScenarioUserAttemptRequestDto
 import cz.cuni.mff.kocaro.comm_app.commappandroid.security.getDeviceId
-import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.navigation.GlobalRoute
-import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.navigation.NvcScenarioExerciseRoute
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

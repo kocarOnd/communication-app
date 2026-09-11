@@ -54,11 +54,17 @@ class MainActivity : ComponentActivity() {
                             popUpTo<GlobalRoute.MainMenu> { inclusive = true }
                         }
                         is NvcUiEvent.AdvanceToMultiSelect -> navController.navigate(NvcScenarioExerciseRoute.MultiSelectPhase) {
+                            popUpTo<NvcScenarioExerciseRoute.Loading> { inclusive = true }
+                        }
+                        is NvcUiEvent.AdvanceToSwipePhase -> navController.navigate(NvcScenarioExerciseRoute.SwipePhase) {
                             popUpTo<NvcScenarioExerciseRoute.MultiSelectPhase> { inclusive = true }
                         }
-                        is NvcUiEvent.AdvanceToSwipePhase -> navController.navigate(NvcScenarioExerciseRoute.SwipePhase)
-                        is NvcUiEvent.AdvanceToSwipeSummary -> navController.navigate(NvcScenarioExerciseRoute.SwipeSummary)
-                        is NvcUiEvent.AdvanceToFullReport -> navController.navigate(NvcScenarioExerciseRoute.FullReport)
+                        is NvcUiEvent.AdvanceToSwipeSummary -> navController.navigate(NvcScenarioExerciseRoute.SwipeSummary) {
+                            popUpTo<NvcScenarioExerciseRoute.SwipePhase> { inclusive = true }
+                        }
+                        is NvcUiEvent.AdvanceToFullReport -> navController.navigate(NvcScenarioExerciseRoute.FullReport) {
+                            popUpTo<NvcScenarioExerciseRoute.SwipeSummary> { inclusive = true }
+                        }
                     }
                 }
             }
