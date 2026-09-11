@@ -7,6 +7,8 @@ import cz.cuni.mff.kocaro.comm_app.commappandroid.network.NvcScenarioApiClient
 import cz.cuni.mff.kocaro.comm_app.commappandroid.network.dto.NvcPhase
 import cz.cuni.mff.kocaro.comm_app.commappandroid.network.dto.NvcScenarioUserAttemptRequestDto
 import cz.cuni.mff.kocaro.comm_app.commappandroid.security.getDeviceId
+import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.nvc_scenario.mapper.toUiModel
+import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -47,7 +49,9 @@ class NvcScenarioViewModel(application: Application) : AndroidViewModel(applicat
                         options = rawScenario.options.shuffled()
                     )
 
-                    _uiState.value = ScenarioUiState.Active(scenario = randomizedScenario)
+                    val stableUiModel = randomizedScenario.toUiModel()
+
+                    _uiState.value = ScenarioUiState.Active(scenario = stableUiModel)
 
                     // Trigger the navigation to leave the Loading screen
                     _uiEvent.send(NvcUiEvent.AdvanceToMultiSelect)
@@ -65,12 +69,11 @@ class NvcScenarioViewModel(application: Application) : AndroidViewModel(applicat
         // Lock selections once the user has pressed submit
         if (currentState.isEvaluated) return
 
-        val newSelections = currentState.selectedOptionIds.toMutableSet()
-        if (newSelections.contains(optionId)) {
-            newSelections.remove(optionId)
-        } else {
-            newSelections.add(optionId)
-        }
+        val newSelections = if (currentState.selectedOptionIds.contains(optionId)) {
+            currentState.selectedOptionIds.removing(optionId)
+            } else {
+            currentState.selectedOptionIds.adding(optionId)
+            }
 
         _uiState.value = currentState.copy(selectedOptionIds = newSelections)
     }
@@ -84,9 +87,9 @@ class NvcScenarioViewModel(application: Application) : AndroidViewModel(applicat
         val currentState = _uiState.value as? ScenarioUiState.Active ?: return
 
         // Accumulate the swipe decisions
-        val newEvaluated = currentState.evaluatedOptionIds + optionId
+        val newEvaluated = currentState.evaluatedOptionIds.adding(optionId)
         val newSelected = if (isSelected) {
-            currentState.selectedOptionIds + optionId
+            currentState.selectedOptionIds.adding(optionId)
         } else {
             currentState.selectedOptionIds
         }
@@ -149,7 +152,8 @@ class NvcScenarioViewModel(application: Application) : AndroidViewModel(applicat
             }
         }
 
-        val updatedSessionSelections = currentState.sessionSelectedOptionIds + currentState.selectedOptionIds
+        val updatedSessionSelections =
+            currentState.sessionSelectedOptionIds.addingAll(currentState.selectedOptionIds)
 
         val nextPhase = when (currentState.currentPhase) {
             NvcPhase.OBSERVATION -> NvcPhase.FEELING
@@ -164,8 +168,8 @@ class NvcScenarioViewModel(application: Application) : AndroidViewModel(applicat
 
         _uiState.value = currentState.copy(
             currentPhase = nextPhase,
-            selectedOptionIds = if (isTerminalPhase) currentState.selectedOptionIds else emptySet(),
-            evaluatedOptionIds = if (isTerminalPhase) currentState.evaluatedOptionIds else emptySet(),
+            selectedOptionIds = if (isTerminalPhase) currentState.selectedOptionIds else persistentSetOf(),
+            evaluatedOptionIds = if (isTerminalPhase) currentState.evaluatedOptionIds else persistentSetOf(),
             isEvaluated = false,
 
             sessionSelectedOptionIds = updatedSessionSelections

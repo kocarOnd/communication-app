@@ -16,7 +16,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import cz.cuni.mff.kocaro.comm_app.commappandroid.network.dto.NvcScenarioOptionDto
+import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.nvc_scenario.models.NvcOptionUiModel
 import kotlinx.coroutines.launch
 
 @Composable
@@ -73,7 +73,7 @@ fun SwipeExercise(
 
 @Composable
 private fun SwipeableCard(
-    option: NvcScenarioOptionDto,
+    option: NvcOptionUiModel,
     isTopCard: Boolean,
     onSwiped: (Boolean) -> Unit
 ) {
