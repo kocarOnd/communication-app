@@ -50,19 +50,15 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(Unit) {
                 viewModel.uiEvent.collect { event ->
                     when (event) {
-                        is NvcUiEvent.Navigate -> {
-                            if (event.route == GlobalRoute.MainMenu.route) {
-                                navController.navigate(event.route) {
-                                    popUpTo(0) { inclusive = true }
-                                }
-                            } else {
-                                navController.navigate(event.route) {
-                                    popUpTo(NvcScenarioExerciseRoute.MultiSelectPhase.route) {
-                                        inclusive = true
-                                    }
-                                }
-                            }
+                        is NvcUiEvent.ReturnToMainMenu -> navController.navigate(GlobalRoute.MainMenu) {
+                            popUpTo<GlobalRoute.MainMenu> { inclusive = true }
                         }
+                        is NvcUiEvent.AdvanceToMultiSelect -> navController.navigate(NvcScenarioExerciseRoute.MultiSelectPhase) {
+                            popUpTo<NvcScenarioExerciseRoute.MultiSelectPhase> { inclusive = true }
+                        }
+                        is NvcUiEvent.AdvanceToSwipePhase -> navController.navigate(NvcScenarioExerciseRoute.SwipePhase)
+                        is NvcUiEvent.AdvanceToSwipeSummary -> navController.navigate(NvcScenarioExerciseRoute.SwipeSummary)
+                        is NvcUiEvent.AdvanceToFullReport -> navController.navigate(NvcScenarioExerciseRoute.FullReport)
                     }
                 }
             }
@@ -70,10 +66,10 @@ class MainActivity : ComponentActivity() {
             // The Root Routing Engine
             NavHost(
                 navController = navController,
-                startDestination = GlobalRoute.MainMenu.route
+                startDestination = GlobalRoute.MainMenu
             ) {
                 // --- GLOBAL DOMAIN ---
-                composable(GlobalRoute.MainMenu.route) {
+                composable<GlobalRoute.MainMenu> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("Communication App", style = MaterialTheme.typography.headlineMedium)
@@ -81,7 +77,7 @@ class MainActivity : ComponentActivity() {
                             Button(onClick = {
                                 // To restart the exercise, we must fetch a fresh scenario
                                 viewModel.fetchNewScenario()
-                                navController.navigate(NvcScenarioExerciseRoute.Loading.route)
+                                navController.navigate(NvcScenarioExerciseRoute.Loading)
                             }) {
                                 Text("Start NVC Scenario Exercise")
                             }
@@ -90,7 +86,7 @@ class MainActivity : ComponentActivity() {
                 }
 
                 // --- EXERCISE DOMAIN (Wrapped in Scaffold) ---
-                composable(NvcScenarioExerciseRoute.Loading.route) {
+                composable<NvcScenarioExerciseRoute.Loading> {
                     ExerciseScaffold(uiState = uiState) { innerPadding ->
                         Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
                             Text("Loading Scenario from Spring Boot...")
@@ -98,7 +94,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                composable(NvcScenarioExerciseRoute.MultiSelectPhase.route) {
+                composable<NvcScenarioExerciseRoute.MultiSelectPhase> {
                     ExerciseScaffold(uiState = uiState) { innerPadding ->
                         if (uiState is ScenarioUiState.Active) {
                             Box(modifier = Modifier.padding(innerPadding)) {
@@ -113,7 +109,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                composable(NvcScenarioExerciseRoute.SwipePhase.route) {
+                composable<NvcScenarioExerciseRoute.SwipePhase> {
                     ExerciseScaffold(uiState = uiState) { innerPadding ->
                         if (uiState is ScenarioUiState.Active) {
                             Box(modifier = Modifier.padding(innerPadding)) {
@@ -126,10 +122,9 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                composable(NvcScenarioExerciseRoute.SwipeSummary.route) {
+                composable<NvcScenarioExerciseRoute.SwipeSummary> {
                     ExerciseScaffold(uiState = uiState) { innerPadding ->
                         Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
-                            // Temporary placeholder for the Swipe Evaluation UI
                             SwipeExerciseSummary(
                                 state = uiState as ScenarioUiState.Active,
                                 onNextClicked = { viewModel.advanceToNextPhase() }
@@ -139,12 +134,12 @@ class MainActivity : ComponentActivity() {
                 }
 
                 // --- TERMINAL DOMAIN (No Scaffold) ---
-                composable(NvcScenarioExerciseRoute.FullReport.route) {
+                composable<NvcScenarioExerciseRoute.FullReport> {
                     if (uiState is ScenarioUiState.Active) {
                         val activeState = uiState as ScenarioUiState.Active
                         ScenarioFullReport (
                             state = activeState,
-                            onFinishClicked = { viewModel.finishExerciseAndExit() } // NEW: Trigger the exit
+                            onFinishClicked = { viewModel.finishExerciseAndExit() }
                         )
                     }
                 }

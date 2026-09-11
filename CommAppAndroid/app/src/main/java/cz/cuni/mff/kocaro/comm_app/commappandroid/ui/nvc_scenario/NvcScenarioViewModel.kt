@@ -15,9 +15,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlin.coroutines.cancellation.CancellationException
 
 sealed interface NvcUiEvent {
-    data class Navigate(val route: String) : NvcUiEvent
+    data object ReturnToMainMenu : NvcUiEvent
+    data object AdvanceToMultiSelect : NvcUiEvent
+    data object AdvanceToSwipePhase : NvcUiEvent
+    data object AdvanceToSwipeSummary : NvcUiEvent
+    data object AdvanceToFullReport : NvcUiEvent
 }
 
 class NvcScenarioViewModel(application: Application) : AndroidViewModel(application) {
@@ -47,7 +52,7 @@ class NvcScenarioViewModel(application: Application) : AndroidViewModel(applicat
                     _uiState.value = ScenarioUiState.Active(scenario = randomizedScenario)
 
                     // Trigger the navigation to leave the Loading screen
-                    _uiEvent.send(NvcUiEvent.Navigate(NvcScenarioExerciseRoute.MultiSelectPhase.route))
+                    _uiEvent.send(NvcUiEvent.AdvanceToMultiSelect)
                 } else {
                     _uiState.value = ScenarioUiState.Error("HTTP Error: ${response.code()}")
                 }
@@ -127,6 +132,8 @@ class NvcScenarioViewModel(application: Application) : AndroidViewModel(applicat
                             break
                         }
                     } catch (e: Exception) {
+                        if (e is CancellationException) throw e
+
                         break
                     }
                 }
@@ -137,6 +144,8 @@ class NvcScenarioViewModel(application: Application) : AndroidViewModel(applicat
                         failedAttemptQueue.add(currentDto)
                     }
                 } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+
                     failedAttemptQueue.add(currentDto)
                 }
             }
@@ -167,9 +176,9 @@ class NvcScenarioViewModel(application: Application) : AndroidViewModel(applicat
         // Trigger one-time navigation events for structural screen changes
         viewModelScope.launch {
             when (nextPhase) {
-                NvcPhase.REQUEST -> _uiEvent.send(NvcUiEvent.Navigate(NvcScenarioExerciseRoute.SwipePhase.route))
-                NvcPhase.SWIPE_SUMMARY -> _uiEvent.send(NvcUiEvent.Navigate(NvcScenarioExerciseRoute.SwipeSummary.route))
-                NvcPhase.FULL_REPORT -> _uiEvent.send(NvcUiEvent.Navigate(NvcScenarioExerciseRoute.FullReport.route))
+                NvcPhase.REQUEST -> _uiEvent.send(NvcUiEvent.AdvanceToSwipePhase)
+                NvcPhase.SWIPE_SUMMARY -> _uiEvent.send(NvcUiEvent.AdvanceToSwipeSummary)
+                NvcPhase.FULL_REPORT -> _uiEvent.send(NvcUiEvent.AdvanceToFullReport)
                 else -> {} // MultiSelectPhase just re-renders in place; no navigation needed
             }
         }
@@ -177,7 +186,7 @@ class NvcScenarioViewModel(application: Application) : AndroidViewModel(applicat
 
     fun finishExerciseAndExit() {
         viewModelScope.launch {
-            _uiEvent.send(NvcUiEvent.Navigate(GlobalRoute.MainMenu.route))
+            _uiEvent.send(NvcUiEvent.ReturnToMainMenu)
         }
     }
 }
