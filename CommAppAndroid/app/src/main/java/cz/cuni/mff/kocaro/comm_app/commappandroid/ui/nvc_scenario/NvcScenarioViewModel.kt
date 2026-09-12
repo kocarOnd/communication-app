@@ -159,29 +159,33 @@ class NvcScenarioViewModel(application: Application) : AndroidViewModel(applicat
             NvcPhase.OBSERVATION -> NvcPhase.FEELING
             NvcPhase.FEELING -> NvcPhase.NEED
             NvcPhase.NEED -> NvcPhase.REQUEST
-            NvcPhase.REQUEST -> NvcPhase.SWIPE_SUMMARY
-            NvcPhase.SWIPE_SUMMARY -> NvcPhase.FULL_REPORT
-            NvcPhase.FULL_REPORT -> NvcPhase.FULL_REPORT
+            NvcPhase.REQUEST -> null
         }
 
-        val isTerminalPhase = nextPhase == NvcPhase.SWIPE_SUMMARY || nextPhase == NvcPhase.FULL_REPORT
+        if (nextPhase != null) {
+            _uiState.value = currentState.copy(
+                currentPhase = nextPhase,
+                selectedOptionIds = persistentSetOf(),
+                evaluatedOptionIds = persistentSetOf(),
+                isEvaluated = false,
+                sessionSelectedOptionIds = updatedSessionSelections
+            )
+            if (nextPhase == NvcPhase.REQUEST) {
+                viewModelScope.launch { _uiEvent.send(NvcUiEvent.AdvanceToSwipePhase) }
+            }
+        } else {
+            if (!currentState.isSummaryCompleted) {
+                _uiState.value = currentState.copy(
+                    isSummaryCompleted = true,
+                    selectedOptionIds = currentState.selectedOptionIds,
+                    evaluatedOptionIds = currentState.evaluatedOptionIds,
+                    isEvaluated = false,
+                    sessionSelectedOptionIds = updatedSessionSelections
+                )
+                viewModelScope.launch { _uiEvent.send(NvcUiEvent.AdvanceToSwipeSummary) }
 
-        _uiState.value = currentState.copy(
-            currentPhase = nextPhase,
-            selectedOptionIds = if (isTerminalPhase) currentState.selectedOptionIds else persistentSetOf(),
-            evaluatedOptionIds = if (isTerminalPhase) currentState.evaluatedOptionIds else persistentSetOf(),
-            isEvaluated = false,
-
-            sessionSelectedOptionIds = updatedSessionSelections
-        )
-
-        // Trigger one-time navigation events for structural screen changes
-        viewModelScope.launch {
-            when (nextPhase) {
-                NvcPhase.REQUEST -> _uiEvent.send(NvcUiEvent.AdvanceToSwipePhase)
-                NvcPhase.SWIPE_SUMMARY -> _uiEvent.send(NvcUiEvent.AdvanceToSwipeSummary)
-                NvcPhase.FULL_REPORT -> _uiEvent.send(NvcUiEvent.AdvanceToFullReport)
-                else -> {} // MultiSelectPhase just re-renders in place; no navigation needed
+            } else {
+                viewModelScope.launch { _uiEvent.send(NvcUiEvent.AdvanceToFullReport) }
             }
         }
     }

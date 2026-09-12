@@ -18,13 +18,6 @@ fun ScenarioFullReport(
     state: ScenarioUiState.Active,
     onFinishClicked: () -> Unit
 ) {
-    // Isolate only the actionable phases to prevent rendering empty summary blocks
-    val evaluablePhases = listOf(
-        NvcPhase.OBSERVATION,
-        NvcPhase.FEELING,
-        NvcPhase.NEED,
-        NvcPhase.REQUEST
-    )
 
     Scaffold(
         topBar = {
@@ -59,7 +52,7 @@ fun ScenarioFullReport(
                     )
                 }
 
-                items(evaluablePhases) { phase ->
+                items(NvcPhase.entries.toTypedArray()) { phase ->
                     val phaseOptions = state.scenario.options.filter { it.phase == phase }
 
                     // 1. Calculate the strict mathematical outcome

@@ -20,6 +20,7 @@ sealed interface ScenarioUiState {
         val selectedOptionIds: PersistentSet<Long> = persistentSetOf(),
         val evaluatedOptionIds: PersistentSet<Long> = persistentSetOf(),
         val isEvaluated: Boolean = false,
+        val isSummaryCompleted: Boolean = false,
 
         val sessionSelectedOptionIds: PersistentSet<Long> = persistentSetOf()
     ) : ScenarioUiState {
