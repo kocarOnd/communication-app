@@ -2,6 +2,9 @@ package cz.cuni.mff.kocaro.comm_app.commappandroid.network.dto
 
 import com.google.gson.annotations.SerializedName
 
+/**
+ * DTO for Scenario options send from backend
+ */
 data class NvcScenarioOptionDto(
     @SerializedName("id") val id: Long,
     @SerializedName("phase") val phase: NvcPhase,

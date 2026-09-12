@@ -7,6 +7,9 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 
+/**
+ * API service for obtaining NVC scenarios and noting user attempts
+ */
 interface NvcScenarioApiService {
 
     @GET("/api/nvc/scenarios/random")
