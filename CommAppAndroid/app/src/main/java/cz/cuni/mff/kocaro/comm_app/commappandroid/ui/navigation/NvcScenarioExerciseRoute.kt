@@ -2,6 +2,11 @@ package cz.cuni.mff.kocaro.comm_app.commappandroid.ui.navigation
 
 import kotlinx.serialization.Serializable
 
+/**
+ * Represents the linear navigation within NVC scenario exercises:
+ *
+ * Loading -> MultiSelect (observation, feeling, need) -> Swipe (request) -> Summary -> Report
+ */
 sealed interface NvcScenarioExerciseRoute {
 
     @Serializable

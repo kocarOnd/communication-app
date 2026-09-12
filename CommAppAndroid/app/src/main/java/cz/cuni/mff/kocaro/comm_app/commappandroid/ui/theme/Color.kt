@@ -10,6 +10,9 @@ val Purple40 = Color(0xFF6650a4)
 val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
+/**
+ * Returns colour based on whether the card was selected and whether it is a correct option
+ */
 public fun calculateCardColor(isSelected: Boolean, isCorrect: Boolean, isEvaluated: Boolean): Color {
     if (!isEvaluated) {
         return if (isSelected) Color.LightGray else Color.White
