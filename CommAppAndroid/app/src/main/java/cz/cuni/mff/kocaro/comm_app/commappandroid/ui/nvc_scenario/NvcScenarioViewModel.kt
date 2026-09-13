@@ -66,7 +66,7 @@ class NvcScenarioViewModel(application: Application) : AndroidViewModel(applicat
 
     fun toggleOptionSelection(optionId: Long) {
         val currentState = _uiState.value as? ScenarioUiState.Active ?: return
-        // Lock selections once the user has pressed submit
+
         if (currentState.isEvaluated) return
 
         val newSelections = if (currentState.selectedOptionIds.contains(optionId)) {
@@ -114,7 +114,7 @@ class NvcScenarioViewModel(application: Application) : AndroidViewModel(applicat
         val phaseSelections = currentState.selectedOptionIds.toList()
         val scenarioId = currentState.scenario.id
 
-        if (phaseSelections.isNotEmpty()) {
+        if (phaseSelections.isNotEmpty() && !currentState.isSummaryCompleted) {
             val currentDto = NvcScenarioUserAttemptRequestDto(
                 deviceId = sessionDeviceId,
                 scenarioId = scenarioId,
