@@ -17,6 +17,9 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlin.coroutines.cancellation.CancellationException
 
+/**
+ * An interface facilitating conversation between NavHost and [NvcScenarioViewModel]
+ */
 sealed interface NvcUiEvent {
     data object ReturnToMainMenu : NvcUiEvent
     data object AdvanceToMultiSelect : NvcUiEvent
@@ -25,16 +28,24 @@ sealed interface NvcUiEvent {
     data object AdvanceToFullReport : NvcUiEvent
 }
 
+/**
+ * The ViewModel for NVC Scenario exercise context, responsible for keeping information out of UI
+ */
 class NvcScenarioViewModel(application: Application) : AndroidViewModel(application) {
     private val sessionDeviceId: String = getDeviceId(application)
-    // Internal mutable state
     private val _uiState = MutableStateFlow<ScenarioUiState>(ScenarioUiState.Loading)
-    // Public immutable state that Jetpack Compose will observe
     val uiState: StateFlow<ScenarioUiState> = _uiState.asStateFlow()
     private val _uiEvent = Channel<NvcUiEvent>()
     val uiEvent = _uiEvent.receiveAsFlow()
+
+    /**
+     * A small, in-memory queue of previous user attempts that could not have been delivered to backend
+     */
     private val failedAttemptQueue = mutableListOf<NvcScenarioUserAttemptRequestDto>()
 
+    /**
+     * Function responsible for fetching scenarios and starting the exercise
+     */
     fun fetchNewScenario() {
         _uiState.value = ScenarioUiState.Loading
 
@@ -53,7 +64,6 @@ class NvcScenarioViewModel(application: Application) : AndroidViewModel(applicat
 
                     _uiState.value = ScenarioUiState.Active(scenario = stableUiModel)
 
-                    // Trigger the navigation to leave the Loading screen
                     _uiEvent.send(NvcUiEvent.AdvanceToMultiSelect)
                 } else {
                     _uiState.value = ScenarioUiState.Error("HTTP Error: ${response.code()}")
@@ -64,6 +74,9 @@ class NvcScenarioViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
+    /**
+     * Function handling the changes to selection in multiselection the exercise
+     */
     fun toggleOptionSelection(optionId: Long) {
         val currentState = _uiState.value as? ScenarioUiState.Active ?: return
 
@@ -78,15 +91,20 @@ class NvcScenarioViewModel(application: Application) : AndroidViewModel(applicat
         _uiState.value = currentState.copy(selectedOptionIds = newSelections)
     }
 
+    /**
+     * Flags the current state as evaluated
+     */
     fun submitPhase() {
         val currentState = _uiState.value as? ScenarioUiState.Active ?: return
         _uiState.value = currentState.copy(isEvaluated = true)
     }
 
+    /**
+     * Records the choice upon swiping in the swiping exercise
+     */
     fun recordSwipe(optionId: Long, isSelected: Boolean) {
         val currentState = _uiState.value as? ScenarioUiState.Active ?: return
 
-        // Accumulate the swipe decisions
         val newEvaluated = currentState.evaluatedOptionIds.adding(optionId)
         val newSelected = if (isSelected) {
             currentState.selectedOptionIds.adding(optionId)
@@ -94,7 +112,6 @@ class NvcScenarioViewModel(application: Application) : AndroidViewModel(applicat
             currentState.selectedOptionIds
         }
 
-        // Mutate the state
         val updatedState = currentState.copy(
             evaluatedOptionIds = newEvaluated,
             selectedOptionIds = newSelected
@@ -102,55 +119,65 @@ class NvcScenarioViewModel(application: Application) : AndroidViewModel(applicat
 
         _uiState.value = updatedState
 
-        // Evaluate the threshold: If the deck is empty, force the final transition
         if (updatedState.remainingOptions.isEmpty()) {
             advanceToNextPhase()
         }
     }
 
-    fun advanceToNextPhase() {
-        val currentState = _uiState.value as? ScenarioUiState.Active ?: return
+    /**
+     * submits the current selection to the backend (unless the summary is completed or the
+     * selection is empty)
+     */
+    private fun submitUserAttempt(state: ScenarioUiState.Active) {
+        val phaseSelections = state.selectedOptionIds.toList()
+        val scenarioId = state.scenario.id
 
-        val phaseSelections = currentState.selectedOptionIds.toList()
-        val scenarioId = currentState.scenario.id
+        if(phaseSelections.isEmpty() || state.isSummaryCompleted) return
 
-        if (phaseSelections.isNotEmpty() && !currentState.isSummaryCompleted) {
-            val currentDto = NvcScenarioUserAttemptRequestDto(
-                deviceId = sessionDeviceId,
-                scenarioId = scenarioId,
-                selectedOptionIds = phaseSelections
-            )
+        val currentDto = NvcScenarioUserAttemptRequestDto(
+            deviceId = sessionDeviceId,
+            scenarioId = scenarioId,
+            selectedOptionIds = phaseSelections
+        )
 
-            viewModelScope.launch {
-                val iterator = failedAttemptQueue.iterator()
-                while (iterator.hasNext()) {
-                    val pastDto = iterator.next()
-                    try {
-                        val response = NvcScenarioApiClient.apiService.submitAttempt(pastDto)
-                        if (response.isSuccessful) {
-                            iterator.remove()
-                        } else {
-                            break
-                        }
-                    } catch (e: Exception) {
-                        if (e is CancellationException) throw e
-
-                        break
-                    }
-                }
-
+        viewModelScope.launch {
+            val iterator = failedAttemptQueue.iterator()
+            while (iterator.hasNext()) {
+                val pastDto = iterator.next()
                 try {
-                    val response = NvcScenarioApiClient.apiService.submitAttempt(currentDto)
-                    if (!response.isSuccessful) {
-                        failedAttemptQueue.add(currentDto)
+                    val response = NvcScenarioApiClient.apiService.submitAttempt(pastDto)
+                    if (response.isSuccessful) {
+                        iterator.remove()
+                    } else {
+                        break
                     }
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e
 
-                    failedAttemptQueue.add(currentDto)
+                    break
                 }
             }
+
+            try {
+                val response = NvcScenarioApiClient.apiService.submitAttempt(currentDto)
+                if (!response.isSuccessful) {
+                    failedAttemptQueue.add(currentDto)
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+
+                failedAttemptQueue.add(currentDto)
+            }
         }
+    }
+
+    /**
+     * Function responsible for the linear progression of the NVC scenario exercise
+     */
+    fun advanceToNextPhase() {
+        val currentState = _uiState.value as? ScenarioUiState.Active ?: return
+
+        submitUserAttempt(state = currentState)
 
         val updatedSessionSelections =
             currentState.sessionSelectedOptionIds.addingAll(currentState.selectedOptionIds)
@@ -190,6 +217,9 @@ class NvcScenarioViewModel(application: Application) : AndroidViewModel(applicat
         }
     }
 
+    /**
+     * Sends a navigation event to return to the menu
+     */
     fun finishExerciseAndExit() {
         viewModelScope.launch {
             _uiEvent.send(NvcUiEvent.ReturnToMainMenu)

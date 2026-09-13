@@ -74,19 +74,16 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            // The Root Routing Engine
             NavHost(
                 navController = navController,
                 startDestination = GlobalRoute.MainMenu
             ) {
-                // --- GLOBAL DOMAIN ---
                 composable<GlobalRoute.MainMenu> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("Communication App", style = MaterialTheme.typography.headlineMedium)
                             Spacer(modifier = Modifier.height(32.dp))
                             Button(onClick = {
-                                // To restart the exercise, we must fetch a fresh scenario
                                 viewModel.fetchNewScenario()
                                 navController.navigate(NvcScenarioExerciseRoute.Loading)
                             }) {
@@ -96,7 +93,6 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                // --- EXERCISE DOMAIN (Wrapped in Scaffold) ---
                 composable<NvcScenarioExerciseRoute.Loading> {
                     ExerciseScaffold(uiState = uiState) { innerPadding ->
                         Box(
@@ -152,7 +148,6 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                // --- TERMINAL DOMAIN (No Scaffold) ---
                 composable<NvcScenarioExerciseRoute.FullReport> {
                     if (uiState is ScenarioUiState.Active) {
                         val activeState = uiState as ScenarioUiState.Active
@@ -167,7 +162,9 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-// Reusable structural wrapper that enforces the visual boundary of the exercise
+/**
+ * Reusable structural wrapper that enforces the visual boundary of the exercise
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ExerciseScaffold(

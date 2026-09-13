@@ -9,6 +9,9 @@ import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentSetOf
 import kotlinx.collections.immutable.toImmutableList
 
+/**
+ * State interface through which the ViewModel communicates with UI components
+ */
 sealed interface ScenarioUiState {
     data object Loading : ScenarioUiState
     data class Error(val message: String) : ScenarioUiState
