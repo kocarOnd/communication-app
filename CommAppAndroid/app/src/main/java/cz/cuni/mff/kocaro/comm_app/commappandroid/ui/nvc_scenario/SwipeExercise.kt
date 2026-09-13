@@ -19,6 +19,15 @@ import androidx.compose.ui.unit.dp
 import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.nvc_scenario.models.NvcOptionUiModel
 import kotlinx.coroutines.launch
 
+/**
+ * Renders a list of swipeable cards with labels
+ *
+ * **Architectural Contract:**
+ *  * **Spatial:** This component aggressively consumes all available space and should be placed
+ *  inside a container.
+ *  * **State:** Relies on [ScenarioUiState.Active] to evaluate swipe card rendering
+ *  * **Delegation:** Card progressions are strictly delegated through [onSwipe].
+ */
 @Composable
 fun SwipeExercise(
     state: ScenarioUiState.Active,
@@ -28,7 +37,6 @@ fun SwipeExercise(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // The static context header
         Text(
             text = state.scenario.contextDescription,
             style = MaterialTheme.typography.bodyLarge,
@@ -45,9 +53,8 @@ fun SwipeExercise(
             if (options.isEmpty()) {
                 Text("Evaluating results...")
             } else {
-                // Reverse iteration to render the active card on top
+                // Reversing iteration to render the active card on top
                 options.asReversed().forEachIndexed { reversedIndex, option ->
-                    // The actual index relative to the top of the deck
                     val isTopCard = reversedIndex == options.lastIndex
 
                     key(option.id) {
@@ -61,7 +68,7 @@ fun SwipeExercise(
             }
         }
 
-        // Instructional footer
+        // Footer with instructions
         Text(
             text = "Swipe Right to Select • Swipe Left to Ignore",
             style = MaterialTheme.typography.bodySmall,
@@ -71,6 +78,9 @@ fun SwipeExercise(
     }
 }
 
+/**
+ * Helper function that renders a card with a given NVC option UI model
+ */
 @Composable
 private fun SwipeableCard(
     option: NvcOptionUiModel,
@@ -80,9 +90,8 @@ private fun SwipeableCard(
     val coroutineScope = rememberCoroutineScope()
     val offset = remember { Animatable(Offset.Zero, Offset.VectorConverter) }
 
-    // Aesthetic structural values based on position in the stack
+    // Making the top card slightly bigger
     val scale = if (isTopCard) 1f else 0.95f
-    val alpha = if (isTopCard) 1f else 0.8f
 
     Card(
         modifier = Modifier
@@ -94,7 +103,6 @@ private fun SwipeableCard(
                 rotationZ = offset.value.x / 20f // Kinetic angular momentum
                 scaleX = scale
                 scaleY = scale
-                this.alpha = alpha
             }
             .then(
                 if (isTopCard) {
@@ -103,17 +111,24 @@ private fun SwipeableCard(
                             onDragEnd = {
                                 coroutineScope.launch {
                                     val escapeThreshold = 300f
+                                    // remove the card upon reaching a threshold or snap back
                                     if (offset.value.x > escapeThreshold) {
-                                        // Eject Right
-                                        offset.animateTo(Offset(1500f, offset.value.y), tween(300))
+                                        offset.animateTo(
+                                            Offset(1500f, offset.value.y),
+                                            tween(300)
+                                        )
                                         onSwiped(true)
                                     } else if (offset.value.x < -escapeThreshold) {
-                                        // Eject Left
-                                        offset.animateTo(Offset(-1500f, offset.value.y), tween(300))
+                                        offset.animateTo(
+                                            Offset(-1500f, offset.value.y),
+                                            tween(300)
+                                        )
                                         onSwiped(false)
                                     } else {
-                                        // Snap back to center
-                                        offset.animateTo(Offset.Zero, tween(300))
+                                        offset.animateTo(
+                                            Offset.Zero,
+                                            tween(300)
+                                        )
                                     }
                                 }
                             },

@@ -50,21 +50,26 @@ class MainActivity : ComponentActivity() {
             LaunchedEffect(Unit) {
                 viewModel.uiEvent.collect { event ->
                     when (event) {
-                        is NvcUiEvent.ReturnToMainMenu -> navController.navigate(GlobalRoute.MainMenu) {
-                            popUpTo<GlobalRoute.MainMenu> { inclusive = true }
-                        }
-                        is NvcUiEvent.AdvanceToMultiSelect -> navController.navigate(NvcScenarioExerciseRoute.MultiSelectPhase) {
-                            popUpTo<NvcScenarioExerciseRoute.Loading> { inclusive = true }
-                        }
-                        is NvcUiEvent.AdvanceToSwipePhase -> navController.navigate(NvcScenarioExerciseRoute.SwipePhase) {
-                            popUpTo<NvcScenarioExerciseRoute.MultiSelectPhase> { inclusive = true }
-                        }
-                        is NvcUiEvent.AdvanceToSwipeSummary -> navController.navigate(NvcScenarioExerciseRoute.SwipeSummary) {
-                            popUpTo<NvcScenarioExerciseRoute.SwipePhase> { inclusive = true }
-                        }
-                        is NvcUiEvent.AdvanceToFullReport -> navController.navigate(NvcScenarioExerciseRoute.FullReport) {
-                            popUpTo<NvcScenarioExerciseRoute.SwipeSummary> { inclusive = true }
-                        }
+                        is NvcUiEvent.ReturnToMainMenu ->
+                            navController.navigate(GlobalRoute.MainMenu) {
+                                popUpTo<GlobalRoute.MainMenu> { inclusive = true }
+                            }
+                        is NvcUiEvent.AdvanceToMultiSelect ->
+                            navController.navigate(NvcScenarioExerciseRoute.MultiSelectPhase) {
+                                popUpTo<NvcScenarioExerciseRoute.Loading> { inclusive = true }
+                            }
+                        is NvcUiEvent.AdvanceToSwipePhase ->
+                            navController.navigate(NvcScenarioExerciseRoute.SwipePhase) {
+                                popUpTo<NvcScenarioExerciseRoute.MultiSelectPhase> { inclusive = true }
+                            }
+                        is NvcUiEvent.AdvanceToSwipeSummary ->
+                            navController.navigate(NvcScenarioExerciseRoute.SwipeSummary) {
+                                popUpTo<NvcScenarioExerciseRoute.SwipePhase> { inclusive = true }
+                            }
+                        is NvcUiEvent.AdvanceToFullReport ->
+                            navController.navigate(NvcScenarioExerciseRoute.FullReport) {
+                                popUpTo<NvcScenarioExerciseRoute.SwipeSummary> { inclusive = true }
+                            }
                     }
                 }
             }
@@ -94,7 +99,10 @@ class MainActivity : ComponentActivity() {
                 // --- EXERCISE DOMAIN (Wrapped in Scaffold) ---
                 composable<NvcScenarioExerciseRoute.Loading> {
                     ExerciseScaffold(uiState = uiState) { innerPadding ->
-                        Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
+                        Box(
+                            modifier = Modifier.fillMaxSize().padding(innerPadding),
+                            contentAlignment = Alignment.Center
+                        ) {
                             Text("Loading Scenario from Spring Boot...")
                         }
                     }
@@ -121,7 +129,9 @@ class MainActivity : ComponentActivity() {
                             Box(modifier = Modifier.padding(innerPadding)) {
                                 SwipeExercise(
                                     state = uiState as ScenarioUiState.Active,
-                                    onSwipe = { optionId, isSelected -> viewModel.recordSwipe(optionId, isSelected) }
+                                    onSwipe = { optionId, isSelected ->
+                                        viewModel.recordSwipe(optionId, isSelected)
+                                    }
                                 )
                             }
                         }
@@ -130,7 +140,10 @@ class MainActivity : ComponentActivity() {
 
                 composable<NvcScenarioExerciseRoute.SwipeSummary> {
                     ExerciseScaffold(uiState = uiState) { innerPadding ->
-                        Box(modifier = Modifier.fillMaxSize().padding(innerPadding), contentAlignment = Alignment.Center) {
+                        Box(
+                            modifier = Modifier.fillMaxSize().padding(innerPadding),
+                            contentAlignment = Alignment.Center
+                        ) {
                             SwipeExerciseSummary(
                                 state = uiState as ScenarioUiState.Active,
                                 onNextClicked = { viewModel.advanceToNextPhase() }
@@ -166,7 +179,7 @@ private fun ExerciseScaffold(
             TopAppBar(
                 title = {
                     val titleText = if (uiState is ScenarioUiState.Active) {
-                        "Phase: ${uiState.currentPhase.name}"
+                        "Please, select the correct ${uiState.currentPhase.name}(s)"
                     } else {
                         "NVC Exercise"
                     }

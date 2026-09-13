@@ -12,6 +12,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cz.cuni.mff.kocaro.comm_app.commappandroid.network.dto.NvcPhase
 
+/**
+ * Renders a list of cards with report data for a scenario exercise
+ *
+ * **Architectural Contract:**
+ *  * **Spatial:** This component uses a Scaffold and is expected to cover an empty screen
+ *  * **State:** Relies on [ScenarioUiState.Active] to evaluate report card rendering
+ *  * **Delegation:** Finishing the report page is delegated through [onFinishClicked].
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScenarioFullReport(
@@ -55,7 +63,6 @@ fun ScenarioFullReport(
                 items(NvcPhase.entries.toTypedArray()) { phase ->
                     val phaseOptions = state.scenario.options.filter { it.phase == phase }
 
-                    // 1. Calculate the strict mathematical outcome
                     val correctSelected = phaseOptions.count {
                         state.sessionSelectedOptionIds.contains(it.id) && it.isCorrect
                     }
@@ -83,16 +90,28 @@ fun ScenarioFullReport(
                                 color = DividerDefaults.color
                             )
 
-                            // 2. Render the analytical matrix
-                            MetricRow(label = "Correctly Selected:", count = correctSelected, color = Color(0xFF2E7D32)) // Green
-                            MetricRow(label = "Incorrectly Selected:", count = incorrectSelected, color = Color(0xFFC62828)) // Red
-                            MetricRow(label = "Correct Options Missed:", count = correctMissed, color = Color(0xFFEF6C00)) // Orange
+                            // Rendering of the analytical matrix
+                            MetricRow(
+                                label = "Correctly Selected:",
+                                count = correctSelected,
+                                color = Color(0xFF2E7D32)
+                            )
+                            MetricRow(
+                                label = "Incorrectly Selected:",
+                                count = incorrectSelected,
+                                color = Color(0xFFC62828)
+                            )
+                            MetricRow(
+                                label = "Correct Options Missed:",
+                                count = correctMissed,
+                                color = Color(0xFFEF6C00)
+                            )
                         }
                     }
                 }
             }
 
-            // 3. The Terminal Action
+            // The finish button area
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shadowElevation = 8.dp,
@@ -111,6 +130,9 @@ fun ScenarioFullReport(
     }
 }
 
+/**
+ * A helper function that renders a row of a matrix with label, count and colour
+ */
 @Composable
 private fun MetricRow(label: String, count: Int, color: Color) {
     Row(

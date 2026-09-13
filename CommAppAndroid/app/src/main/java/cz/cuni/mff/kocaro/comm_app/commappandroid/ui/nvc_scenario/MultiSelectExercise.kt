@@ -12,6 +12,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.theme.calculateCardColor
 
+/**
+ * Renders a list of scrollable options
+ *
+ * **Architectural Contract:**
+ *  * **Spatial:** This component aggressively consumes all available space and should be placed
+ *  inside a container.
+ *  * **State:** Relies on [ScenarioUiState.Active] to evaluate option rendering, selection
+ *  highlighting, and the dynamic rendering of the submission button.
+ *  * **Delegation:** Interaction with a specific card delegates the ID via [onOptionToggled], while
+ *    phase progressions are strictly delegated through [onSubmitClicked] and [onNextClicked].
+ */
 @Composable
 fun MultiSelectExercise(
     state: ScenarioUiState.Active,
@@ -21,10 +32,9 @@ fun MultiSelectExercise(
 ) {
     val currentOptions = state.scenario.options.filter { it.phase == state.currentPhase }
 
-    // 1. The Parent Container
     Column(modifier = Modifier.fillMaxSize()) {
 
-        // 2. The Scrolling Viewport (weight = 1f forces it to fill space above the button)
+        // card area
         LazyColumn(
             modifier = Modifier
                 .weight(1f)
@@ -32,7 +42,12 @@ fun MultiSelectExercise(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // Headlines and context
             item {
+                Text(
+                    text = "Context",
+                    style = MaterialTheme.typography.headlineSmall
+                )
                 Text(
                     text = state.scenario.contextDescription,
                     style = MaterialTheme.typography.bodyLarge,
@@ -40,6 +55,7 @@ fun MultiSelectExercise(
                 )
             }
 
+            // cards themselves
             items(currentOptions) { option ->
                 val isSelected = state.selectedOptionIds.contains(option.id)
                 val cardColor = calculateCardColor(isSelected, option.isCorrect, state.isEvaluated)
@@ -71,10 +87,10 @@ fun MultiSelectExercise(
             }
         }
 
-        // 3. The Anchored Button Container
+        //Submit button area
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shadowElevation = 8.dp, // Elevates the button area visually above the scrolling list
+            shadowElevation = 8.dp,
             color = MaterialTheme.colorScheme.surface
         ) {
             Box(modifier = Modifier.padding(16.dp)) {
@@ -82,7 +98,6 @@ fun MultiSelectExercise(
                     Button(
                         onClick = onSubmitClicked,
                         modifier = Modifier.fillMaxWidth(),
-                        // Disable submit if no options are selected to prevent accidental blank submissions
                         enabled = state.selectedOptionIds.isNotEmpty()
                     ) {
                         Text("Submit Answers")

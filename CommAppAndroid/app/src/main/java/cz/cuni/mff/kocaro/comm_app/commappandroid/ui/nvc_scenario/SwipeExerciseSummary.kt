@@ -13,12 +13,20 @@ import androidx.compose.ui.unit.dp
 import cz.cuni.mff.kocaro.comm_app.commappandroid.network.dto.NvcPhase
 import cz.cuni.mff.kocaro.comm_app.commappandroid.ui.theme.calculateCardColor
 
+/**
+ * Renders a list of summary cards with feedback and colours based on correctness
+ *
+ * **Architectural Contract:**
+ *  * **Spatial:** This component aggressively consumes all available space and should be placed
+ *  inside a container.
+ *  * **State:** Relies on [ScenarioUiState.Active] to evaluate summary card rendering
+ *  * **Delegation:** Finishing the report page is delegated through [onNextClicked].
+ */
 @Composable
 fun SwipeExerciseSummary(
     state: ScenarioUiState.Active,
     onNextClicked: () -> Unit
 ) {
-    // Filter specifically for the REQUEST options that were swiped
     val requestOptions = state.scenario.options.filter { it.phase == NvcPhase.REQUEST }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -37,7 +45,6 @@ fun SwipeExerciseSummary(
 
             items(requestOptions) { option ->
                 val isSelected = state.selectedOptionIds.contains(option.id)
-                // Assuming calculateCardColor is now a globally accessible top-level function
                 val cardColor = calculateCardColor(
                     isSelected = isSelected,
                     isCorrect = option.isCorrect,
@@ -50,7 +57,6 @@ fun SwipeExerciseSummary(
                     border = BorderStroke(1.dp, Color.DarkGray)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        // Explicit kinetic label
                         Text(
                             text = if (isSelected) "You Swiped Right (Selected)" else "You Swiped Left (Ignored)",
                             style = MaterialTheme.typography.labelMedium,
