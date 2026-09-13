@@ -13,6 +13,9 @@ viewmodelCompose = "2.11.0"
 navigation = "2.10.1"
 kotlinxSerialization = "1.11.0"
 kotlinxImmutable = "0.5.2"
+mockwebserver = "5.5.0"
+coroutinesTest = "1.11.0"
+mockito = "5.23.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -35,6 +38,10 @@ retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", ver
 retrofit-v300 = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 kotlinx-collections-immutable = { group = "org.jetbrains.kotlinx", name = "kotlinx-collections-immutable", version.ref = "kotlinxImmutable" }
+mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "mockwebserver" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutinesTest" }
+mockito-core = {group = "org.mockito", name = "mockito-core", version.ref = "mockito"}
+mockito-junit = {group = "org.mockito", name = "mockito-junit-jupiter", version.ref = "mockito"}
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
