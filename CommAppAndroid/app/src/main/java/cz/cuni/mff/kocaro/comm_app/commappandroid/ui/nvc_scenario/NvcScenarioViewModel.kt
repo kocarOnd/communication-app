@@ -1,9 +1,11 @@
 package cz.cuni.mff.kocaro.comm_app.commappandroid.ui.nvc_scenario
 
 import android.app.Application
+import androidx.annotation.VisibleForTesting
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import cz.cuni.mff.kocaro.comm_app.commappandroid.network.NvcScenarioApiClient
+import cz.cuni.mff.kocaro.comm_app.commappandroid.network.NvcScenarioApiService
 import cz.cuni.mff.kocaro.comm_app.commappandroid.network.dto.NvcPhase
 import cz.cuni.mff.kocaro.comm_app.commappandroid.network.dto.NvcScenarioUserAttemptRequestDto
 import cz.cuni.mff.kocaro.comm_app.commappandroid.security.getDeviceId
@@ -37,6 +39,8 @@ class NvcScenarioViewModel(application: Application) : AndroidViewModel(applicat
     val uiState: StateFlow<ScenarioUiState> = _uiState.asStateFlow()
     private val _uiEvent = Channel<NvcUiEvent>()
     val uiEvent = _uiEvent.receiveAsFlow()
+    @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE)
+    var apiService: NvcScenarioApiService = NvcScenarioApiClient.apiService
 
     /**
      * A small, in-memory queue of previous user attempts that could not have been delivered to backend
@@ -52,7 +56,7 @@ class NvcScenarioViewModel(application: Application) : AndroidViewModel(applicat
         // viewModelScope ensures this coroutine is safely cancelled if the ViewModel is cleared
         viewModelScope.launch {
             try {
-                val response = NvcScenarioApiClient.apiService.getRandomScenario()
+                val response = apiService.getRandomScenario()
                 if (response.isSuccessful && response.body() != null) {
                     val rawScenario = response.body()!!
 
@@ -145,7 +149,7 @@ class NvcScenarioViewModel(application: Application) : AndroidViewModel(applicat
             while (iterator.hasNext()) {
                 val pastDto = iterator.next()
                 try {
-                    val response = NvcScenarioApiClient.apiService.submitAttempt(pastDto)
+                    val response = apiService.submitAttempt(pastDto)
                     if (response.isSuccessful) {
                         iterator.remove()
                     } else {
@@ -159,7 +163,7 @@ class NvcScenarioViewModel(application: Application) : AndroidViewModel(applicat
             }
 
             try {
-                val response = NvcScenarioApiClient.apiService.submitAttempt(currentDto)
+                val response = apiService.submitAttempt(currentDto)
                 if (!response.isSuccessful) {
                     failedAttemptQueue.add(currentDto)
                 }
