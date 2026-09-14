@@ -73,6 +73,10 @@ public class NvcScenarioService {
                 NvcScenarioOption option = optionRepository.findById(optionId)
                         .orElseThrow(() -> new IllegalArgumentException("Option not found: " + optionId));
 
+                if (option.getScenario().getId() != requestDto.scenarioId()) {
+                        throw new IllegalArgumentException("The selected option does not belong to the provided scenario.");
+                }
+
                 NvcScenarioUserAttempt attempt = new NvcScenarioUserAttempt();
                 attempt.setAttemptedAt(LocalDateTime.now());
                 attempt.setDeviceId(requestDto.deviceId());

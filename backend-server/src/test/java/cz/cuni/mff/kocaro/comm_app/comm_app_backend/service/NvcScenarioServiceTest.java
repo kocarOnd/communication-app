@@ -101,10 +101,14 @@ class NvcScenarioServiceTest {
         scenarioService.processUserAttempt(request);
 
         // ASSERT: Verify that the attemptRepository.save() method was called exactly onc
-        ArgumentCaptor<NvcScenarioUserAttempt> captor = ArgumentCaptor.forClass(NvcScenarioUserAttempt.class);
-        verify(attemptRepository, times(1)).save(captor.capture());
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<NvcScenarioUserAttempt>> captor = ArgumentCaptor.forClass(List.class);
+        verify(attemptRepository, times(1)).saveAll(captor.capture());
 
-        NvcScenarioUserAttempt savedAttempt = captor.getValue();
+        List<NvcScenarioUserAttempt> savedAttempts = captor.getValue();
+        assertEquals(1, savedAttempts.size());
+
+        NvcScenarioUserAttempt savedAttempt = savedAttempts.get(0);
         assertEquals("device-123", savedAttempt.getDeviceId());
         assertEquals(NvcPhase.OBSERVATION, savedAttempt.getPhase());
         assertTrue(savedAttempt.isWasCorrect());
