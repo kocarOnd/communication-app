@@ -36,7 +36,6 @@ class NvcScenarioControllerTest {
 
     @Test
     void getRandomScenario_Returns200AndJson() throws Exception {
-        // ARRANGE: Set up the fake service to return a dummy DTO
         NvcScenarioOptionDto optionDto = new NvcScenarioOptionDto(
                 10L, NvcPhase.OBSERVATION, "Test Option", true, "Good job!"
         );
@@ -46,7 +45,6 @@ class NvcScenarioControllerTest {
 
         when(scenarioService.getRandomScenario()).thenReturn(responseDto);
 
-        // ACT & ASSERT: Perform the GET request and verify the JSON response
         mockMvc.perform(get("/api/nvc/scenarios/random")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
@@ -57,11 +55,9 @@ class NvcScenarioControllerTest {
 
     @Test
     void getRandomScenario_WhenEmptyDatabase_Returns404() throws Exception {
-        // ARRANGE: Tell the service to throw our custom exception
         when(scenarioService.getRandomScenario())
                 .thenThrow(new ScenarioNotFoundException("No scenarios currently available in the database."));
 
-        // ACT & ASSERT: Verify that the GlobalExceptionHandler catches it and returns a 404
         mockMvc.perform(get("/api/nvc/scenarios/random")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNotFound())
@@ -71,14 +67,12 @@ class NvcScenarioControllerTest {
 
     @Test
     void submitAttempt_WithValidData_Returns200() throws Exception {
-        // ARRANGE: Create a valid JSON payload
         List<Long> ids = new ArrayList<>();
         ids.add(10L);
 
         NvcScenarioUserAttemptRequestDto requestDto = new NvcScenarioUserAttemptRequestDto("device-123", 1L, ids);
         String jsonPayload = objectMapper.writeValueAsString(requestDto);
 
-        // ACT & ASSERT: Expect a 200 OK
         mockMvc.perform(post("/api/nvc/scenarios/attempt")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonPayload))
@@ -87,14 +81,12 @@ class NvcScenarioControllerTest {
 
     @Test
     void submitAttempt_WithMissingDeviceId_Returns400() throws Exception {
-        // ARRANGE: Create an invalid payload (device ID is blank)
         List<Long> ids = new ArrayList<>();
         ids.add(10L);
 
         NvcScenarioUserAttemptRequestDto requestDto = new NvcScenarioUserAttemptRequestDto("", 1L, ids);
         String jsonPayload = objectMapper.writeValueAsString(requestDto);
 
-        // ACT & ASSERT: Expect a 400 Bad Request before it even reaches the Service layer
         mockMvc.perform(post("/api/nvc/scenarios/attempt")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(jsonPayload))

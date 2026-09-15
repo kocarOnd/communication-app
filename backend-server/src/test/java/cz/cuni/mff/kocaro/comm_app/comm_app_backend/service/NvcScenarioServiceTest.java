@@ -63,13 +63,10 @@ class NvcScenarioServiceTest {
 
     @Test
     void getRandomScenario_WhenScenarioExists_ReturnsDto() {
-        // ARRANGE: Tell the fake repository what to return when called
         when(scenarioRepository.findRandomScenario()).thenReturn(Optional.of(mockScenario));
 
-        // ACT: Call the method we are testing
         NvcScenarioResponseDto result = scenarioService.getRandomScenario();
 
-        // ASSERT: Check that the result is exactly what we expect
         assertNotNull(result);
         assertEquals(1L, result.id());
         assertEquals("Test Scenario", result.title());
@@ -79,16 +76,13 @@ class NvcScenarioServiceTest {
 
     @Test
     void getRandomScenario_WhenDatabaseEmpty_ThrowsException() {
-        // ARRANGE: Simulate an empty database
         when(scenarioRepository.findRandomScenario()).thenReturn(Optional.empty());
 
-        // ACT & ASSERT: Verify that calling the method throws our custom exception
         assertThrows(ScenarioNotFoundException.class, () -> scenarioService.getRandomScenario());
     }
 
     @Test
     void processUserAttempt_WithValidData_SavesAttempt() {
-        // ARRANGE
         List<Long> ids = new ArrayList<>();
         ids.add(10L);
 
@@ -97,10 +91,8 @@ class NvcScenarioServiceTest {
         when(scenarioRepository.findById(1L)).thenReturn(Optional.of(mockScenario));
         when(optionRepository.findById(10L)).thenReturn(Optional.of(mockOption));
 
-        // ACT
         scenarioService.processUserAttempt(request);
 
-        // ASSERT: Verify that the attemptRepository.save() method was called exactly onc
         @SuppressWarnings("unchecked")
         ArgumentCaptor<List<NvcScenarioUserAttempt>> captor = ArgumentCaptor.forClass(List.class);
         verify(attemptRepository, times(1)).saveAll(captor.capture());
@@ -116,7 +108,6 @@ class NvcScenarioServiceTest {
 
     @Test
     void processUserAttempt_WithOptionFromWrongScenario_ThrowsException() {
-        // ARRANGE: Create a sneaky option that belongs to Scenario 2, not Scenario 1
         NvcScenario sneakyScenario = new NvcScenario();
         sneakyScenario.setId(2L);
         
@@ -132,7 +123,6 @@ class NvcScenarioServiceTest {
         when(scenarioRepository.findById(1L)).thenReturn(Optional.of(mockScenario));
         when(optionRepository.findById(99L)).thenReturn(Optional.of(sneakyOption));
 
-        // ACT & ASSERT: The service should catch the mismatch and throw an exception
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, 
                 () -> scenarioService.processUserAttempt(request));
                 
